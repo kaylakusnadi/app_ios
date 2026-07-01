@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart'; // Tambahkan package intl di pubspec.yaml jika belum ada
 import '../bloc/notification_cubit.dart';
 
 class NotificationPage extends StatefulWidget {
@@ -16,24 +17,19 @@ class _NotificationPageState extends State<NotificationPage> {
     context.read<NotificationCubit>().markAsRead();
   }
 
-// Updated: 2026-07-01 by Kayla
-// Change: Menambahkan fungsi parsing teks dengan RichText
-// Reason: Mengidentifikasi bagian teks yang diapit delimiter '|' untuk diberikan font bold
   List<TextSpan> _buildRichText(String text) {
     final parts = text.split('|');
     List<TextSpan> spans = [];
     for (int i = 0; i < parts.length; i++) {
       if (i % 2 != 0) {
-        // Teks di antara delimiter | (Username)
         spans.add(TextSpan(
           text: parts[i],
-          style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black87, fontSize: 14),
+          style: TextStyle(fontWeight: FontWeight.w700, color: Theme.of(context).textTheme.bodyLarge?.color, fontSize: 14),
         ));
       } else {
-        // Teks biasa
         spans.add(TextSpan(
           text: parts[i],
-          style: const TextStyle(fontWeight: FontWeight.normal, color: Colors.black54, fontSize: 14),
+          style: const TextStyle(fontWeight: FontWeight.normal, color: Colors.grey, fontSize: 14),
         ));
       }
     }
@@ -42,45 +38,33 @@ class _NotificationPageState extends State<NotificationPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Menggunakan warna scaffold dari tema untuk latar belakang
     return Scaffold(
-// Updated: 2026-07-01 by Kayla
-// Change: Mengubah background color dan desain list
-// Reason: Menyelaraskan dengan tema 3D Clear Bubble pada halaman Dashboard
-      backgroundColor: const Color(0xFFF8F9FA), 
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text("Notifikasi", style: TextStyle(fontWeight: FontWeight.w700)),
       ),
       body: BlocBuilder<NotificationCubit, NotificationState>(
         builder: (context, state) {
-          if (state.messages.isEmpty) {
-            return const Center(
-              child: Text(
-                "Belum ada riwayat notifikasi.",
-                style: TextStyle(color: Colors.grey, fontSize: 16),
-              ),
-            );
+          if (state.items.isEmpty) {
+            return const Center(child: Text("Belum ada riwayat notifikasi.", style: TextStyle(color: Colors.grey)));
           }
           return ListView.builder(
             padding: const EdgeInsets.only(top: 16.0, bottom: 24.0),
-            itemCount: state.messages.length,
+            itemCount: state.items.length,
             itemBuilder: (context, index) {
-              final rawMessage = state.messages[index];
-              final isDeleteAction = rawMessage.contains("Menghapus");
+              final item = state.items[index];
+              final isDeleteAction = item.message.contains("Menghapus");
+              final formattedTime = DateFormat('HH:mm').format(item.timestamp);
               
               return Container(
                 margin: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
                 padding: const EdgeInsets.all(16.0),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(20.0),
-                  border: Border.all(color: Colors.white, width: 1.5),
                   boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.04),
-                      blurRadius: 16.0,
-                      spreadRadius: 0.0,
-                      offset: const Offset(0, 8),
-                    ),
+                    BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 16.0, offset: const Offset(0, 8)),
                   ],
                 ),
                 child: Row(
@@ -88,27 +72,16 @@ class _NotificationPageState extends State<NotificationPage> {
                     CircleAvatar(
                       backgroundColor: isDeleteAction ? Colors.red.shade50 : Colors.blue.shade50,
                       radius: 24,
-                      child: Icon(
-                        isDeleteAction ? Icons.favorite_border : Icons.favorite, 
-                        color: isDeleteAction ? Colors.redAccent : Colors.blueAccent, 
-                        size: 20
-                      ),
+                      child: Icon(isDeleteAction ? Icons.favorite_border : Icons.favorite, color: isDeleteAction ? Colors.redAccent : Colors.blueAccent, size: 20),
                     ),
                     const SizedBox(width: 16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          RichText(
-                            text: TextSpan(
-                              children: _buildRichText(rawMessage),
-                            ),
-                          ),
+                          RichText(text: TextSpan(children: _buildRichText(item.message))),
                           const SizedBox(height: 4),
-                          const Text(
-                            "Baru saja", 
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
+                          Text(formattedTime, style: const TextStyle(color: Colors.grey, fontSize: 12)),
                         ],
                       ),
                     ),

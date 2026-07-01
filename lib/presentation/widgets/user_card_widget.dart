@@ -4,9 +4,6 @@ import '../pages/user_detail_page.dart';
 
 class UserCardWidget extends StatelessWidget {
   final UserModel user;
-// Updated: 2026-07-01 by Kayla
-// Change: Menambahkan parameter isFavorite dengan nilai default false
-// Reason: Untuk memberikan indikator visual khusus jika user tersebut sudah berada di daftar favorit
   final bool isFavorite;
 
   const UserCardWidget({
@@ -17,6 +14,11 @@ class UserCardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+// Updated: 2026-07-01 by Kayla
+// Change: Mengambil properti warna dinamis dari konteks tema
+// Reason: Agar komponen 3D Bubble Card bisa beradaptasi otomatis saat Dark Mode aktif
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -25,18 +27,18 @@ class UserCardWidget extends StatelessWidget {
         );
       },
       child: Container(
-// Updated: 2026-07-01 by Kayla
-// Change: Mempersempit lebar card dengan mengubah horizontal margin dari 16.0 menjadi 24.0
-// Reason: Menyesuaikan estetika UI agar tidak terlalu melebar (stretched) dan lebih nyaman dipandang
         margin: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10.0),
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(24.0),
-          border: Border.all(color: Colors.white, width: 1.5),
+          border: Border.all(
+            color: isDark ? Colors.white12 : Colors.white, 
+            width: 1.5
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.06),
               blurRadius: 24.0,
               spreadRadius: 0.0,
               offset: const Offset(0, 12),
@@ -53,7 +55,7 @@ class UserCardWidget extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 28.0,
-              backgroundColor: Colors.grey.shade100,
+              backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
               backgroundImage: NetworkImage(user.avatarUrl),
             ),
             const SizedBox(width: 16.0),
@@ -63,11 +65,12 @@ class UserCardWidget extends StatelessWidget {
                 children: [
                   Text(
                     user.login,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16.0,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.3,
-                      color: Colors.black87,
+                      // Warna teks mengikuti tema (putih saat dark mode, hitam saat light mode)
+                      color: Theme.of(context).textTheme.bodyLarge?.color, 
                     ),
                   ),
                   const SizedBox(height: 4.0),
@@ -82,9 +85,6 @@ class UserCardWidget extends StatelessWidget {
                 ],
               ),
             ),
-// Updated: 2026-07-01 by Kayla
-// Change: Menambahkan indikator ikon love kecil jika isFavorite bernilai true
-// Reason: Memberikan pembeda visual antara data biasa dengan data yang sudah di-favorit-kan di halaman Dashboard
             if (isFavorite)
               const Padding(
                 padding: EdgeInsets.only(right: 8.0),
@@ -93,7 +93,7 @@ class UserCardWidget extends StatelessWidget {
             const Icon(
               Icons.arrow_forward_ios_rounded,
               size: 16.0,
-              color: Colors.black26,
+              color: Colors.grey,
             ),
           ],
         ),

@@ -4,6 +4,10 @@ import '../bloc/user_bloc.dart';
 import '../bloc/user_event.dart';
 import '../bloc/user_state.dart';
 import '../bloc/notification_cubit.dart';
+// Updated: 2026-07-01 by Kayla
+// Change: Mengimpor ThemeCubit
+// Reason: Untuk mengakses aksi ubah tema dari tombol AppBar
+import '../bloc/theme_cubit.dart';
 import 'notification_page.dart';
 import '../widgets/user_card_widget.dart';
 import 'favorite_page.dart';
@@ -48,6 +52,19 @@ class _DashboardPageState extends State<DashboardPage> {
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
           ),
           actions: [
+// Updated: 2026-07-01 by Kayla
+// Change: Menambahkan tombol toggle tema (Light/Dark) di sebelah notifikasi
+// Reason: Praktik UX modern yang memudahkan pengguna mengganti tema tanpa masuk ke menu tersembunyi
+            BlocBuilder<ThemeCubit, bool>(
+              builder: (context, isDarkMode) {
+                return IconButton(
+                  icon: Icon(isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
+                  onPressed: () {
+                    context.read<ThemeCubit>().toggleTheme();
+                  },
+                );
+              },
+            ),
             BlocBuilder<NotificationCubit, NotificationState>(
               builder: (context, state) {
                 return Stack(
@@ -100,7 +117,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   hintText: "Cari user...",
                   prefixIcon: const Icon(Icons.search, color: Colors.blue),
                   filled: true,
-                  fillColor: Colors.white,
+// Updated: 2026-07-01 by Kayla
+// Change: Mengubah fillColor TextField menjadi responsif terhadap tema
+// Reason: Menghindari kotak putih mencolok saat aplikasi dalam mode gelap
+                  fillColor: Theme.of(context).cardColor,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -126,7 +146,6 @@ class _DashboardPageState extends State<DashboardPage> {
             Expanded(
               child: TabBarView(
                 children: [
-                  // ==================== TAB POPULAR ====================
                   BlocBuilder<UserBloc, UserState>(
                     builder: (context, state) {
                       final listToShow = state.searchResult ?? state.users;
@@ -135,13 +154,11 @@ class _DashboardPageState extends State<DashboardPage> {
                         return const Center(child: CircularProgressIndicator());
                       }
 
-                      // Updated: 2026-07-01 by Kayla
-                      // Change: Memperbaiki logika empty state agar membedakan "loading" dan "tidak ditemukan"
                       if (listToShow.isEmpty) {
                         return const Center(
                           child: Text(
                             "Tidak ada hasil pencarian di Popular.",
-                            style: TextStyle(color: Colors.grey, fontSize: 16), // Berada di dalam Text()
+                            style: TextStyle(color: Colors.grey, fontSize: 16),
                           ),
                         );
                       }
@@ -174,9 +191,6 @@ class _DashboardPageState extends State<DashboardPage> {
                       );
                     },
                   ),
-                  // ==================== TAB FAVORITE ====================
-                  // Updated: 2026-07-01 by Kayla
-                  // Change: Memastikan FavoritePage tetap menampilkan data favorit secara independen
                   const FavoritePage(),
                 ],
               ),

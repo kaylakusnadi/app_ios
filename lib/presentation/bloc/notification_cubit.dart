@@ -1,26 +1,34 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+class NotificationItem {
+  final String message;
+  final DateTime timestamp;
+
+  NotificationItem({required this.message, required this.timestamp});
+}
+
 class NotificationState {
-  final List<String> messages;
+  final List<NotificationItem> items;
   final int unreadCount;
 
-  NotificationState({required this.messages, required this.unreadCount});
+  NotificationState({required this.items, required this.unreadCount});
 
-  NotificationState copyWith({List<String>? messages, int? unreadCount}) {
+  NotificationState copyWith({List<NotificationItem>? items, int? unreadCount}) {
     return NotificationState(
-      messages: messages ?? this.messages,
+      items: items ?? this.items,
       unreadCount: unreadCount ?? this.unreadCount,
     );
   }
 }
 
 class NotificationCubit extends Cubit<NotificationState> {
-  NotificationCubit() : super(NotificationState(messages: [], unreadCount: 0));
+  NotificationCubit() : super(NotificationState(items: [], unreadCount: 0));
 
   void addNotification(String message) {
-    final updatedMessages = List<String>.from(state.messages)..insert(0, message);
+    final newItem = NotificationItem(message: message, timestamp: DateTime.now());
+    final updatedItems = List<NotificationItem>.from(state.items)..insert(0, newItem);
     emit(state.copyWith(
-      messages: updatedMessages,
+      items: updatedItems,
       unreadCount: state.unreadCount + 1,
     ));
   }

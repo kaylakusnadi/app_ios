@@ -22,6 +22,11 @@ class _UserDetailPageState extends State<UserDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+// Updated: 2026-07-01 by Kayla
+// Change: Menyimpan status tema (gelap/terang) ke dalam variabel isDark
+// Reason: Untuk menyesuaikan warna latar, border, dan bayangan kartu detail agar responsif terhadap tema
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Detail User"),
@@ -33,11 +38,8 @@ class _UserDetailPageState extends State<UserDetailPage> {
               return IconButton(
                 icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: Colors.red),
                 onPressed: () {
-                  context.read<UserBloc>().add(ToggleFavoriteEvent(state.detailUser as dynamic));
+                  context.read<UserBloc>().add(ToggleFavoriteEvent(state.detailUser!));
                   
-// Updated: 2026-07-01 by Kayla
-// Change: Memodifikasi format string dengan menambahkan karakter delimiter '|'
-// Reason: Agar halaman notifikasi dapat memisahkan dan menebalkan teks username secara presisi
                   final rawMessage = isFav 
                       ? "Menghapus |${state.detailUser!.login}| dari favorit" 
                       : "Berhasil menambahkan |${state.detailUser!.login}| ke favorit";
@@ -89,25 +91,39 @@ class _UserDetailPageState extends State<UserDetailPage> {
                   tag: user.login,
                   child: CircleAvatar(
                     radius: 60,
-                    backgroundColor: Colors.grey.shade200,
+                    backgroundColor: isDark ? Colors.grey.shade800 : Colors.grey.shade200,
                     backgroundImage: NetworkImage(user.avatarUrl),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   user.login,
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 24, 
+                    fontWeight: FontWeight.bold,
+// Updated: 2026-07-01 by Kayla
+// Change: Mengubah warna teks judul agar responsif terhadap tema
+// Reason: Agar teks tetap terbaca saat Dark Mode aktif
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                  ),
                 ),
                 const SizedBox(height: 32),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(20.0),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+// Updated: 2026-07-01 by Kayla
+// Change: Mengubah warna background container menjadi dinamis dan menambahkan border transparan
+// Reason: Menerapkan konsep 3D Clear Bubble yang menyesuaikan dengan Dark/Light mode
+                    color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(24.0),
+                    border: Border.all(
+                      color: isDark ? Colors.white12 : Colors.white, 
+                      width: 1.5
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.04),
+                        color: isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.04),
                         blurRadius: 20.0,
                         offset: const Offset(0, 4),
                       ),
@@ -115,15 +131,15 @@ class _UserDetailPageState extends State<UserDetailPage> {
                   ),
                   child: Column(
                     children: [
-                      _buildDetailTile(Icons.person_outline, "Name", user.name),
+                      _buildDetailTile(context, Icons.person_outline, "Name", user.name),
                       const Divider(height: 24),
-                      _buildDetailTile(Icons.email_outlined, "E-Mail", user.email),
+                      _buildDetailTile(context, Icons.email_outlined, "E-Mail", user.email),
                       const Divider(height: 24),
-                      _buildDetailTile(Icons.location_on_outlined, "Location", user.location),
+                      _buildDetailTile(context, Icons.location_on_outlined, "Location", user.location),
                       const Divider(height: 24),
-                      _buildDetailTile(Icons.business_outlined, "Company", user.company),
+                      _buildDetailTile(context, Icons.business_outlined, "Company", user.company),
                       const Divider(height: 24),
-                      _buildDetailTile(Icons.people_alt_outlined, "Followers", user.followers.toString()),
+                      _buildDetailTile(context, Icons.people_alt_outlined, "Followers", user.followers.toString()),
                     ],
                   ),
                 ),
@@ -135,7 +151,10 @@ class _UserDetailPageState extends State<UserDetailPage> {
     );
   }
 
-  Widget _buildDetailTile(IconData icon, String title, String value) {
+// Updated: 2026-07-01 by Kayla
+// Change: Menambahkan parameter BuildContext ke _buildDetailTile
+// Reason: Agar fungsi ini dapat mengakses konteks tema untuk warna teks yang dinamis
+  Widget _buildDetailTile(BuildContext context, IconData icon, String title, String value) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -149,7 +168,14 @@ class _UserDetailPageState extends State<UserDetailPage> {
               const SizedBox(height: 4),
               Text(
                 value.isNotEmpty ? value : "-",
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+                style: TextStyle(
+                  fontSize: 16, 
+                  fontWeight: FontWeight.w600, 
+// Updated: 2026-07-01 by Kayla
+// Change: Mengubah warna teks detail (value) agar mengikuti tema
+// Reason: Menghindari teks hitam yang tidak terlihat pada latar belakang gelap
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
               ),
             ],
           ),
