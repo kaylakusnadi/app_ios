@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/user_bloc.dart';
 import '../bloc/user_event.dart';
 import '../bloc/user_state.dart';
+import '../bloc/notification_cubit.dart';
+import 'notification_page.dart';
 import '../widgets/user_card_widget.dart';
 import 'favorite_page.dart';
 
@@ -19,13 +21,11 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
     super.initState();
-    // Memicu fetch data pertama kali saat halaman dibuka
     context.read<UserBloc>().add(FetchUserListEvent());
     _scrollController.addListener(_onScroll);
   }
 
   void _onScroll() {
-    // Lazy load / Pagination: trigger fetch saat scroll menyentuh ujung bawah
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
       context.read<UserBloc>().add(FetchUserListEvent());
     }
@@ -43,31 +43,77 @@ class _DashboardPageState extends State<DashboardPage> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Github Apps Demo"),
+          title: const Text(
+            "GitHub Explorer",
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
+          ),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.info_outline),
-              onPressed: () {},
+            BlocBuilder<NotificationCubit, NotificationState>(
+              builder: (context, state) {
+// Updated: 2026-07-01 by Kayla
+// Change: Memperbaiki posisi dan ukuran badge notifikasi
+// Reason: Agar badge berbentuk titik rapi dan tidak menutupi area interaksi ikon lonceng utama
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.notifications_none_rounded),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const NotificationPage()),
+                        );
+                      },
+                    ),
+                    if (state.unreadCount > 0)
+                      Positioned(
+                        right: 8,
+                        top: 10,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.redAccent,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            '${state.unreadCount}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
             ),
           ],
           bottom: const TabBar(
+            labelColor: Colors.blue,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: Colors.blue,
+            indicatorWeight: 3.0,
             tabs: [
-              Tab(icon: Icon(Icons.people), text: "Popular"),
-              Tab(icon: Icon(Icons.favorite), text: "Favorite"),
+              Tab(icon: Icon(Icons.people_outline), text: "Popular"),
+              Tab(icon: Icon(Icons.favorite_outline), text: "Favorite"),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            // ==================== TAB POPULAR ====================
             BlocBuilder<UserBloc, UserState>(
               builder: (context, state) {
-                // Kondisi 1: Loading di awal saat data masih kosong
                 if (state.isUsersLoading && state.users.isEmpty) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                // Kondisi 2: Error Handling saat fetch gagal dan data kosong (Wajib ada Retry Button)
                 if (state.usersError != null && state.users.isEmpty) {
                   return Center(
                     child: Padding(
@@ -82,6 +128,13 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
                             onPressed: () {
                               context.read<UserBloc>().add(FetchUserListEvent(isRefresh: true));
                             },
@@ -93,12 +146,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   );
                 }
 
-                // Kondisi 3: Data Kosong dari API
                 if (state.users.isEmpty) {
                   return const Center(child: Text("Tidak ada data user."));
                 }
 
-                // Kondisi 4: Sukses Menampilkan Data + Pull to Refresh + Lazy Loading
                 return RefreshIndicator(
                   onRefresh: () async {
                     context.read<UserBloc>().add(FetchUserListEvent(isRefresh: true));
@@ -106,22 +157,25 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: ListView.builder(
                     controller: _scrollController,
                     physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.only(top: 12.0, bottom: 24.0),
                     itemCount: state.hasReachedMax ? state.users.length : state.users.length + 1,
                     itemBuilder: (context, index) {
                       if (index >= state.users.length) {
-                        // Indikator loading tambahan di bawah list saat lazy load berjalan
                         return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16.0),
+                          padding: EdgeInsets.symmetric(vertical: 24.0),
                           child: Center(child: CircularProgressIndicator()),
                         );
                       }
-                      return UserCardWidget(user: state.users[index]);
+                      final isFav = state.favoriteUsers.any((fav) => fav.login == state.users[index].login);
+                      return UserCardWidget(
+                        user: state.users[index],
+                        isFavorite: isFav,
+                      );
                     },
                   ),
                 );
               },
             ),
-
             const FavoritePage(),
           ],
         ),
