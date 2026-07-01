@@ -15,31 +15,26 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     on<SearchUserEvent>(_onSearchUsers);
   }
 
+  // Updated: 2026-07-01 by Kayla
+  // Change: Handler pencarian untuk memfilter list user lokal
   void _onSearchUsers(SearchUserEvent event, Emitter<UserState> emit) {
     if (event.query.isEmpty) {
-// Updated: 2026-07-01 by Kayla
-// Change: Mengembalikan searchQuery menjadi string kosong ("")
-// Reason: Agar tab Favorite kembali menampilkan semua data favorit saat text di search bar dihapus
       emit(state.copyWith(searchResult: null, searchQuery: ""));
     } else {
       final filtered = state.users
           .where((user) => user.login.toLowerCase().contains(event.query.toLowerCase()))
           .toList();
-// Updated: 2026-07-01 by Kayla
-// Change: Menyimpan event.query ke dalam state.searchQuery
-// Reason: Untuk mendistribusikan keyword pencarian ke UI (termasuk FavoritePage)
       emit(state.copyWith(searchResult: filtered, searchQuery: event.query));
     }
   }
 
+  // Updated: 2026-07-01 by Kayla
+  // Change: Menggabungkan logika Fetch User dengan Deduplikasi
   Future<void> _onFetchUserList(FetchUserListEvent event, Emitter<UserState> emit) async {
     if (state.hasReachedMax && !event.isRefresh) return;
 
     try {
       if (event.isRefresh) {
-// Updated: 2026-07-01 by Kayla
-// Change: Me-reset searchQuery menjadi string kosong saat dilakukan refresh (Pull to Refresh)
-// Reason: Mengembalikan daftar menjadi normal dan membatalkan status pencarian aktif
         emit(state.copyWith(isUsersLoading: true, users: [], currentPage: 1, hasReachedMax: false, searchResult: null, searchQuery: ""));
       } else if (state.users.isEmpty) {
         emit(state.copyWith(isUsersLoading: true));
@@ -50,9 +45,14 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       if (newUsers.isEmpty) {
         emit(state.copyWith(isUsersLoading: false, hasReachedMax: true));
       } else {
+        // Logika Deduplikasi: Memfilter user baru yang loginnya sudah ada di state.users
+        final filteredNewUsers = newUsers.where((newUser) => 
+            !state.users.any((existingUser) => existingUser.login == newUser.login)
+        ).toList();
+
         emit(state.copyWith(
           isUsersLoading: false,
-          users: state.users + newUsers,
+          users: state.users + filteredNewUsers,
           currentPage: state.currentPage + 1,
           hasReachedMax: newUsers.length < 5,
         ));
