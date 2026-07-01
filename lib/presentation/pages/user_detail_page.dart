@@ -33,7 +33,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
               return IconButton(
                 icon: Icon(isFav ? Icons.favorite : Icons.favorite_border, color: Colors.red),
                 onPressed: () {
-                  context.read<UserBloc>().add(ToggleFavoriteEvent(state.detailUser!));
+                  context.read<UserBloc>().add(ToggleFavoriteEvent(state.detailUser as dynamic));
                   
 // Updated: 2026-07-01 by Kayla
 // Change: Memodifikasi format string dengan menambahkan karakter delimiter '|'

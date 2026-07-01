@@ -1,3 +1,8 @@
+// Updated: 2026-07-01 by Kayla
+// Change: Menambahkan SearchUserEvent
+// Reason: Untuk memicu proses pencarian user di API GitHub secara terpisah dari list popular
+import '../../data/models/user_model.dart';
+
 abstract class UserEvent {}
 
 class FetchUserListEvent extends UserEvent {
@@ -11,6 +16,12 @@ class FetchUserDetailEvent extends UserEvent {
 }
 
 class ToggleFavoriteEvent extends UserEvent {
-  final dynamic user; // Bisa UserModel atau UserDetailModel
+  final dynamic user;
   ToggleFavoriteEvent(this.user);
+}
+
+// Event baru
+class SearchUserEvent extends UserEvent {
+  final String query;
+  SearchUserEvent(this.query);
 }

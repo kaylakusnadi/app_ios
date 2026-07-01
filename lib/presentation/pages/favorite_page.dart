@@ -11,6 +11,7 @@ class FavoritePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<UserBloc, UserState>(
       builder: (context, state) {
+        // Kondisi 1: Daftar favorit memang benar-benar kosong dari awal
         if (state.favoriteUsers.isEmpty) {
           return Center(
             child: Column(
@@ -49,9 +50,6 @@ class FavoritePage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-// Updated: 2026-07-01 by Kayla
-// Change: Mengubah perilaku tombol Refresh untuk memunculkan SnackBar
-// Reason: Agar tidak otomatis kembali ke halaman Popular dan memberikan feedback lokal sesuai dengan best practice UX
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -74,15 +72,32 @@ class FavoritePage extends StatelessWidget {
           );
         }
 
+// Updated: 2026-07-01 by Kayla
+// Change: Melakukan filtering pada daftar favorit jika searchQuery di state tidak kosong
+// Reason: Agar tab Favorite bereaksi terhadap input pengguna pada Search Bar di Dashboard
+        final listToShow = state.searchQuery.isEmpty 
+            ? state.favoriteUsers 
+            : state.favoriteUsers.where((u) => u.login.toLowerCase().contains(state.searchQuery.toLowerCase())).toList();
+
+// Updated: 2026-07-01 by Kayla
+// Change: Menambahkan empty state spesifik saat pencarian tidak cocok dengan list favorit mana pun
+// Reason: Memberikan umpan balik UX yang membedakan antara "Favorit Kosong" dan "Pencarian Tidak Ditemukan"
+        if (listToShow.isEmpty) {
+          return const Center(
+            child: Text(
+              "Tidak ada hasil pencarian di Favorit.",
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+          );
+        }
+
+        // Menampilkan data favorit yang sudah difilter
         return ListView.builder(
           padding: const EdgeInsets.only(top: 12.0, bottom: 24.0),
-          itemCount: state.favoriteUsers.length,
+          itemCount: listToShow.length,
           itemBuilder: (context, index) {
-// Updated: 2026-07-01 by Kayla
-// Change: Mengirim isFavorite: true pada UserCardWidget
-// Reason: Karena ini halaman Favorite, semua card otomatis menampilkan indikator heart icon
             return UserCardWidget(
-              user: state.favoriteUsers[index],
+              user: listToShow[index],
               isFavorite: true,
             );
           },

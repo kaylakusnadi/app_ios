@@ -2,54 +2,60 @@ import '../../data/models/user_model.dart';
 import '../../data/models/user_detail_model.dart';
 
 class UserState {
-  // List Users (Popular)
   final List<UserModel> users;
+  final List<UserModel> favoriteUsers;
+  final List<UserModel>? searchResult;
+// Updated: 2026-07-01 by Kayla
+// Change: Menambahkan field searchQuery
+// Reason: Untuk menyimpan text pencarian dari UI agar dapat digunakan memfilter data di tab Favorite
+  final String searchQuery;
   final bool isUsersLoading;
+  final bool isDetailLoading;
   final String? usersError;
+  final String? detailError;
   final int currentPage;
   final bool hasReachedMax;
-
-  // Detail User
   final UserDetailModel? detailUser;
-  final bool isDetailLoading;
-  final String? detailError;
-
-  // Favorite In-Memory
-  final List<UserModel> favoriteUsers;
 
   UserState({
     this.users = const [],
+    this.favoriteUsers = const [],
+    this.searchResult,
+    this.searchQuery = "",
     this.isUsersLoading = false,
+    this.isDetailLoading = false,
     this.usersError,
+    this.detailError,
     this.currentPage = 1,
     this.hasReachedMax = false,
     this.detailUser,
-    this.isDetailLoading = false,
-    this.detailError,
-    this.favoriteUsers = const [],
   });
 
   UserState copyWith({
     List<UserModel>? users,
+    List<UserModel>? favoriteUsers,
+    List<UserModel>? searchResult,
+    String? searchQuery,
     bool? isUsersLoading,
+    bool? isDetailLoading,
     String? usersError,
+    String? detailError,
     int? currentPage,
     bool? hasReachedMax,
     UserDetailModel? detailUser,
-    bool? isDetailLoading,
-    String? detailError,
-    List<UserModel>? favoriteUsers,
   }) {
     return UserState(
       users: users ?? this.users,
+      favoriteUsers: favoriteUsers ?? this.favoriteUsers,
+      searchResult: searchResult, 
+      searchQuery: searchQuery ?? this.searchQuery,
       isUsersLoading: isUsersLoading ?? this.isUsersLoading,
-      usersError: usersError,
+      isDetailLoading: isDetailLoading ?? this.isDetailLoading,
+      usersError: usersError ?? this.usersError,
+      detailError: detailError ?? this.detailError,
       currentPage: currentPage ?? this.currentPage,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
       detailUser: detailUser ?? this.detailUser,
-      isDetailLoading: isDetailLoading ?? this.isDetailLoading,
-      detailError: detailError,
-      favoriteUsers: favoriteUsers ?? this.favoriteUsers,
     );
   }
 }

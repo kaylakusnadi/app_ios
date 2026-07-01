@@ -7,10 +7,29 @@ import 'user_state.dart';
 
 class UserBloc extends Bloc<UserEvent, UserState> {
   final ApiService apiService;
+
   UserBloc(this.apiService) : super(UserState()) {
     on<FetchUserListEvent>(_onFetchUserList);
     on<FetchUserDetailEvent>(_onFetchUserDetail);
     on<ToggleFavoriteEvent>(_onToggleFavorite);
+    on<SearchUserEvent>(_onSearchUsers);
+  }
+
+  void _onSearchUsers(SearchUserEvent event, Emitter<UserState> emit) {
+    if (event.query.isEmpty) {
+// Updated: 2026-07-01 by Kayla
+// Change: Mengembalikan searchQuery menjadi string kosong ("")
+// Reason: Agar tab Favorite kembali menampilkan semua data favorit saat text di search bar dihapus
+      emit(state.copyWith(searchResult: null, searchQuery: ""));
+    } else {
+      final filtered = state.users
+          .where((user) => user.login.toLowerCase().contains(event.query.toLowerCase()))
+          .toList();
+// Updated: 2026-07-01 by Kayla
+// Change: Menyimpan event.query ke dalam state.searchQuery
+// Reason: Untuk mendistribusikan keyword pencarian ke UI (termasuk FavoritePage)
+      emit(state.copyWith(searchResult: filtered, searchQuery: event.query));
+    }
   }
 
   Future<void> _onFetchUserList(FetchUserListEvent event, Emitter<UserState> emit) async {
@@ -18,7 +37,10 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
     try {
       if (event.isRefresh) {
-        emit(state.copyWith(isUsersLoading: true, users: [], currentPage: 1, hasReachedMax: false));
+// Updated: 2026-07-01 by Kayla
+// Change: Me-reset searchQuery menjadi string kosong saat dilakukan refresh (Pull to Refresh)
+// Reason: Mengembalikan daftar menjadi normal dan membatalkan status pencarian aktif
+        emit(state.copyWith(isUsersLoading: true, users: [], currentPage: 1, hasReachedMax: false, searchResult: null, searchQuery: ""));
       } else if (state.users.isEmpty) {
         emit(state.copyWith(isUsersLoading: true));
       }

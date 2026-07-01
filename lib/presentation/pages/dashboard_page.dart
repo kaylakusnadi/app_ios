@@ -50,9 +50,6 @@ class _DashboardPageState extends State<DashboardPage> {
           actions: [
             BlocBuilder<NotificationCubit, NotificationState>(
               builder: (context, state) {
-// Updated: 2026-07-01 by Kayla
-// Change: Memperbaiki posisi dan ukuran badge notifikasi
-// Reason: Agar badge berbentuk titik rapi dan tidak menutupi area interaksi ikon lonceng utama
                 return Stack(
                   alignment: Alignment.center,
                   children: [
@@ -75,10 +72,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             color: Colors.redAccent,
                             shape: BoxShape.circle,
                           ),
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
+                          constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
                           child: Text(
                             '${state.unreadCount}',
                             style: const TextStyle(
@@ -95,88 +89,98 @@ class _DashboardPageState extends State<DashboardPage> {
               },
             ),
           ],
-          bottom: const TabBar(
-            labelColor: Colors.blue,
-            unselectedLabelColor: Colors.grey,
-            indicatorColor: Colors.blue,
-            indicatorWeight: 3.0,
-            tabs: [
-              Tab(icon: Icon(Icons.people_outline), text: "Popular"),
-              Tab(icon: Icon(Icons.favorite_outline), text: "Favorite"),
-            ],
-          ),
         ),
-        body: TabBarView(
+        body: Column(
           children: [
-            BlocBuilder<UserBloc, UserState>(
-              builder: (context, state) {
-                if (state.isUsersLoading && state.users.isEmpty) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                onChanged: (value) => context.read<UserBloc>().add(SearchUserEvent(value)),
+                decoration: InputDecoration(
+                  hintText: "Cari user...",
+                  prefixIcon: const Icon(Icons.search, color: Colors.blue),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: const BorderSide(color: Colors.blue, width: 2),
+                  ),
+                ),
+              ),
+            ),
+            const TabBar(
+              labelColor: Colors.blue,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: Colors.blue,
+              indicatorWeight: 3.0,
+              tabs: [
+                Tab(icon: Icon(Icons.people_outline), text: "Popular"),
+                Tab(icon: Icon(Icons.favorite_outline), text: "Favorite"),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  // ==================== TAB POPULAR ====================
+                  BlocBuilder<UserBloc, UserState>(
+                    builder: (context, state) {
+                      final listToShow = state.searchResult ?? state.users;
+                      
+                      if (state.isUsersLoading && state.users.isEmpty) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                if (state.usersError != null && state.users.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Gagal memuat data:\n${state.usersError}",
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.red),
+                      // Updated: 2026-07-01 by Kayla
+                      // Change: Memperbaiki logika empty state agar membedakan "loading" dan "tidak ditemukan"
+                      if (listToShow.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            "Tidak ada hasil pencarian di Popular.",
+                            style: TextStyle(color: Colors.grey, fontSize: 16), // Berada di dalam Text()
                           ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                            onPressed: () {
-                              context.read<UserBloc>().add(FetchUserListEvent(isRefresh: true));
-                            },
-                            child: const Text("Retry"),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                if (state.users.isEmpty) {
-                  return const Center(child: Text("Tidak ada data user."));
-                }
-
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    context.read<UserBloc>().add(FetchUserListEvent(isRefresh: true));
-                  },
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.only(top: 12.0, bottom: 24.0),
-                    itemCount: state.hasReachedMax ? state.users.length : state.users.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index >= state.users.length) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 24.0),
-                          child: Center(child: CircularProgressIndicator()),
                         );
                       }
-                      final isFav = state.favoriteUsers.any((fav) => fav.login == state.users[index].login);
-                      return UserCardWidget(
-                        user: state.users[index],
-                        isFavorite: isFav,
+
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          context.read<UserBloc>().add(FetchUserListEvent(isRefresh: true));
+                        },
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.only(top: 12.0, bottom: 24.0),
+                          itemCount: (state.searchResult != null || state.hasReachedMax) 
+                              ? listToShow.length 
+                              : listToShow.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index >= listToShow.length) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 24.0),
+                                child: Center(child: CircularProgressIndicator()),
+                              );
+                            }
+                            final isFav = state.favoriteUsers.any((fav) => fav.login == listToShow[index].login);
+                            return UserCardWidget(
+                              user: listToShow[index],
+                              isFavorite: isFav,
+                            );
+                          },
+                        ),
                       );
                     },
                   ),
-                );
-              },
+                  // ==================== TAB FAVORITE ====================
+                  // Updated: 2026-07-01 by Kayla
+                  // Change: Memastikan FavoritePage tetap menampilkan data favorit secara independen
+                  const FavoritePage(),
+                ],
+              ),
             ),
-            const FavoritePage(),
           ],
         ),
       ),
